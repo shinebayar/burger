@@ -1,11 +1,14 @@
-import React from "react"
+import React, {useContext} from "react"
+
 import BurgerIngredient from "../BurgerIngredient"
 import css from "./style.module.css"
-import { connect } from "react-redux"
+import BurgerContext from "../../context/BurgerContext"
 
 const Burger = (props) => {
 
-    const items = Object.entries(props.ingredients);
+    const burgerContext = useContext(BurgerContext);
+
+    const items = Object.entries(burgerContext.burger.ingredients);
 
     let content = [];
     items.map((el, j) => { 
@@ -20,19 +23,9 @@ const Burger = (props) => {
         <div className={css.Burger}>
             <BurgerIngredient type="bread-top" />
             {content}
-            {/* <BurgerIngredient type="salad" />
-            <BurgerIngredient type="bacon" />
-            <BurgerIngredient type="meat" />
-            <BurgerIngredient type="cheese" /> */}
             <BurgerIngredient type="bread-bottom" />
         </div>
     );
 }
 
-const mapStateToProps = state =>{
-    return {
-        ingredients: state.burgerReducer.ingredients
-    }
-}
-
-export default connect(mapStateToProps)(Burger);
+export default Burger;

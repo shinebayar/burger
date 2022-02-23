@@ -1,61 +1,44 @@
-import React, {Component} from "react";
-import {connect} from "react-redux";
+import React, {useContext, useState} from "react";
 import { Redirect } from "react-router-dom/cjs/react-router-dom.min";
 
 import css from './style.module.css';
 import Button from '../../components/General/Button';
 import Spinner from '../../components/General/Spinner';
-import * as actions from '../../redux/actions/loginActions';
+import UserContext from "../../context/UserContext";
 
-class Login extends Component{
+const Login = props => {
 
-    state = {
-        email: '',
-        password: ''
+    const userCtx = useContext(UserContext);
+
+    const [form, setForm] = useState({email: '', password: ''});
+
+    const login = () =>{
+        userCtx.loginUser(form.email, form.password);
     }
 
-    login = () =>{
-        this.props.loginUser(this.state.email, this.state.password);
+    const getEmail = e => {
+        const newEmail = e.target.value;
+        setForm( formBefore => ({email: newEmail, password: formBefore.password}) );
     }
 
-    getEmail = e => {
-        this.setState({ email : e.target.value });
+    const getPassword = e => {
+        const newPassword = e.target.value;
+        setForm( formBefore => ({email: formBefore.email, password: newPassword}) );
     }
 
-    getPassword = e => {
-        this.setState({ password : e.target.value });
-    }
+    return <div className={css.Login}>
 
-    render(){
-        return <div className={css.Login}>
+        { userCtx.state.userId && <Redirect to='/orders' /> }
 
-            { this.props.userId && <Redirect to='/orders' /> }
+        <input type='text' placeholder="Email" onChange={getEmail} />
+        <input type='password' placeholder="Password" onChange={getPassword} />
 
-            <input type='text' placeholder="Email" onChange={this.getEmail} />
-            <input type='password' placeholder="Password" onChange={this.getPassword} />
+        { userCtx.state.error && <div style={{color:'red'}}>{userCtx.state.error}</div> }
+        
+        { userCtx.state.logginIn && <Spinner /> }
 
-            { this.props.firebaseError && <div style={{color:'red'}}>{this.props.firebaseError}</div> }
-            
-            { this.props.logging && <Spinner /> }
-
-            <Button text='login' btnType='Success' clicked={this.login} />
-        </div>;
-    }
+        <Button text='login' btnType='Success' clicked={login} />
+    </div>;
 }
 
-const mapStateToProps = state => {
-    return {
-        logging: state.signupReducer.logging,
-        firebaseError: state.signupReducer.firebaseError,
-        token: state.signupReducer.token,
-        userId: state.signupReducer.userId
-    }
-}
-
-const mapDispatchToProps = dispatch => {
-    return {
-        loginUser : (email, password) => dispatch(actions.login(email, password))
-    }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(Login);
+export default Login;

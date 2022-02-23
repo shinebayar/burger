@@ -1,51 +1,37 @@
-import React from "react";
-import { Component } from "react";
+import React, { useState } from "react";
 
 import Burger from "../../components/Burger";
 import BuildControls from "../../components/BuildControls";
 import Modal from "../../components/General/Modal"
 import OrderSummery from "../../components/OrderSummery";
-import Spinner from "../../components/General/Spinner";
 
-class BurgerBuilder extends Component{
+const BurgerBuilder = props => {
 
-    state = {
-        confirmOrder: false,
+    const [confirmOrder, setConfirmOrder] = useState(false);
+
+    const continueOrder = () => {
+        props.history.push({ pathname: '/shipping' });
     }
 
-    continueOrder = () => {
-        this.props.history.push({ pathname: '/shipping' });
+    const showConfirmModal = () =>{
+        setConfirmOrder(true);
     }
 
-    showConfirmModal = () =>{
-        this.setState({confirmOrder: true});
+    const closeConfirmModal = () =>{
+        setConfirmOrder(false);
     }
 
-    closeConfirmModal = () =>{
-        this.setState({confirmOrder: false});
-    }
+    return(
+        <div>
+            <Modal closeConfirmModal={closeConfirmModal} show={confirmOrder}>
+                <OrderSummery  onCancel={closeConfirmModal}  onContinue={continueOrder} />
+            </Modal>
 
-    render(){
+            <Burger />
 
-        return(
-            <div>
-                <Modal closeConfirmModal={this.closeConfirmModal} show={this.state.confirmOrder}>
-                    {this.state.loading ? <Spinner /> : 
-                        <OrderSummery 
-                            onCancel={this.closeConfirmModal}
-                            onContinue={this.continueOrder}
-                        />
-                    }
-                </Modal>
-
-                <Burger />
-
-                <BuildControls
-                    showConfirmModal={this.showConfirmModal}
-                />
-            </div>
-        );
-    }
+            <BuildControls showConfirmModal={showConfirmModal} />
+        </div>
+    );
 }
 
 export default BurgerBuilder;

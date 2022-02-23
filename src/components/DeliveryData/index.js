@@ -1,106 +1,95 @@
-import React from "react";
-import axios from "../../axios-orders";
+import React, {useState, useEffect, useRef, useContext} from "react";
 import { withRouter } from "react-router-dom";
-import {connect} from "react-redux"
+import { useHistory } from "react-router";
 
 import Button from "../General/Button";
 import css from "./style.module.css";
 import Spinner from "../General/Spinner";
-import * as actions from "../../redux/actions/orderActions";
+import BurgerContext from "../../context/BurgerContext";
 
-class DeliveryData extends React.Component{
+const DeliveryData = props => {
 
-    state = {
-        address: '',
-        city: '',
-        district: '',
-        name: ''
-    }    
+    const burgerCtx = useContext(BurgerContext);
+    // console.log('Burger Context: ', burgerCtx);
 
-    getName = e =>{
-        this.setState({ name: e.target.value });
-    }
+    const history = useHistory();
 
-    getCity = e =>{
-        this.setState({ city: e.target.value });
-    }
+    const [address, setAddress] = useState();
+    const [city, setCity] = useState();
+    const [district, setDistrict] = useState();
+    const [name, setName] = useState();  
 
-    getDistrict = e =>{
-        this.setState({ district: e.target.value });
-    }
+    const priceRef = useRef();
 
-    getAddress = e =>{
-        this.setState({ address: e.target.value });
-    }
-
-    componentDidUpdate(){
-        if( this.props.newOrderStatus.finished && !this.props.newOrderStatus.error )
-        this.props.history.replace('/orders');
-    }
-
-    saveOrder = () =>{
-        const newOrder = {
-            address: {
-                address: this.state.address,
-                city: this.state.city,
-                district: this.state.district,
-                name: this.state.name,
-            },
-            // ingredients: this.props.ingredients,
-            ingredients: {
-                bacon: this.props.ingredients.bacon,
-                salad: this.props.ingredients.salad,
-                meat: this.props.ingredients.meat,
-                cheese: this.props.ingredients.cheese
-            },
-            totalPrice: this.props.price,
-            userId: this.props.userId
+    useEffect(() => {
+        // console.log('contact data effect ...');
+        if( burgerCtx.burger.finished && !burgerCtx.burger.error ){
+            history.replace('/orders');
         }
 
-        this.props.saveOrderAction(newOrder);
+        // clean-up-function => prepare for next order and clear current order after finished
+        return () =>{
+            // console.log('order clearing...');
+            burgerCtx.clearBurger();
+        }
+    }, [burgerCtx.burger.finished]);
+    
+    const getName = e =>{
+        if (priceRef.current.style.color === 'red') {
+            priceRef.current.style.color = 'green';
+        } else { priceRef.current.style.color = 'red' }
+        setName(e.target.value);
     }
 
-    render(){
-        return (
-            <div className={css.DeliveryData}>
-                <br/>
+    const getCity = e =>{ setCity(e.target.value); }
 
-                <div>
-                    {this.props.newOrderStatus.error && `Error occured during the saving process: ${this.props.newOrderStatus.error}`}
-                </div>
+    const getDistrict = e =>{ setDistrict(e.target.value); }
 
-                { this.props.newOrderStatus.saving ? (<Spinner />) : 
-                ( 
-                    <div>
-                        name: {this.state.name} | city: {this.state.city} | 
-                        district: {this.state.district} | address: {this.state.address} | 
-                        <input onChange={this.getName} type="text" name="name" placeholder="Your name" />
-                        <input onChange={this.getCity} type="text" name="city" placeholder="City" />
-                        <input onChange={this.getDistrict} type="text" name="district" placeholder="District" />
-                        <input onChange={this.getAddress} type="text" name="address" placeholder="Address info" />
-                        <Button text="SEND" type="Success" clicked={this.saveOrder} />
-                    </div>
-                )
-                }
-                
+    const getAddress = e =>{ setAddress(e.target.value); }
+
+    const saveOrder = () =>{
+        const newOrder = {
+            address: {
+                address, city, district, name
+            },
+            ingredients: {
+                bacon: burgerCtx.burger.ingredients.bacon,
+                salad: burgerCtx.burger.ingredients.salad,
+                meat: burgerCtx.burger.ingredients.meat,
+                cheese: burgerCtx.burger.ingredients.cheese
+            },
+            totalPrice: burgerCtx.burger.totalPrice,
+            userId: "props.userId"
+        }
+
+        burgerCtx.saveBurger(newOrder);
+    }
+
+    return (
+        <div className={css.DeliveryData}>
+            <br/>
+
+            <div>
+                {burgerCtx.burger.error && `Error occured during the saving process: ${burgerCtx.burger.error}`}
             </div>
-        );
-    }
+
+            { burgerCtx.burger.saving ? (<Spinner />) : 
+            ( 
+                <div>
+                    <div> Price: <span ref={priceRef} style={{fontWeight:'bold'}}>{burgerCtx.burger.totalPrice} $</span> </div>
+                    name: {name} | city: {city} | 
+                    district: {district} | address: {address} | 
+                    <input onChange={getName} type="text" name="name" placeholder="Your name" />
+                    <input onChange={getCity} type="text" name="city" placeholder="City" />
+                    <input onChange={getDistrict} type="text" name="district" placeholder="District" />
+                    <input onChange={getAddress} type="text" name="address" placeholder="Address info" />
+                    <Button text="SEND" type="Success" clicked={saveOrder} />
+                </div>
+            )
+            }
+            
+        </div>
+    );
 }
 
-const mapStateToProps = state =>{
-    return {
-        ingredients: state.burgerReducer.ingredients,
-        price: state.burgerReducer.totalPrice,
-        newOrderStatus: state.orderReducer.newOrder,
-        userId: state.signupReducer.userId
-    }
-}
-
-const mapDispatchToProps = dispatch => {
-    return {
-        saveOrderAction: newOrder => dispatch(actions.saveOrder(newOrder))
-    }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(withRouter(DeliveryData));
+export default withRouter(DeliveryData);

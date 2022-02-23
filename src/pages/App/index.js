@@ -1,93 +1,78 @@
-import React, { Fragment } from "react";
-import {connect} from "react-redux";
+import React, { useEffect, Suspense, useContext } from "react";
 import { Redirect } from "react-router-dom/cjs/react-router-dom.min";
 
 import css from './style.module.css';
 import Toolbar from "../../components/Toolbar";
-import BurgerPage from "../BurgerPage";
 import SideBar from "../../components/Sidebar";
-import { Component } from "react";
-import OrderPage from "../OrderPage";
+import { useState } from "react";
 import { Switch, Route } from "react-router-dom";
 import ShippingPage from "../ShippingPage";
 import LoginPage from "../LoginPage";
-import SignupPage from "../SignupPage";
 import Logout from "../../components/Logout";
-import * as actions from '../../redux/actions/loginActions';
+import { BurgerStore } from "../../context/BurgerContext";
+import { OrdersStore } from "../../context/OrdersContext";
+import UserContext from "../../context/UserContext";
 
-class App extends Component {
+const BurgerPage = React.lazy( () => import('../BurgerPage') );
+const SignupPage = React.lazy( () => import('../SignupPage') );
+const OrderPage = React.lazy( () => import('../OrderPage') );
 
-  state = {
-    showSidebar: false,
+const App = props => {
+
+  const userCtx = useContext(UserContext);
+  console.log('userCtx: ', userCtx);
+
+  const [showSidebar, setShowSidebar] = useState(false);
+
+  const toggleSidebar = () =>{
+    setShowSidebar( previousShowSideBar => !previousShowSideBar );
   }
 
-  toggleSidebar = () =>{
-    this.setState(previousState => {
-      return {showSidebar : !previousState.showSidebar};
-    });
-  }
-
-  componentDidMount = () => {
+  useEffect(() => {
     const token = localStorage.getItem('token');
     const userId = localStorage.getItem('userId');
-    const refreshToken = localStorage.getItem('refreshToken');
     const expireDate = localStorage.getItem('expireDate');
-    if(token){
-      console.log('expired date: ', expireDate);
-      if( expireDate > new Date() ){
-        console.log('not expired');
-        // token is not expired
-        this.props.autoLogin(token, userId);
-        this.props.logoutAuto(expireDate.getTime() - new Date().getTime());
-        console.log('eeeeeeeeeeeeeeeeeeeeeeeeeeee: ', expireDate.getTime() - new Date().getTime());
-      }else{
-        console.log('exipred');
-        // token expired
-        this.props.logout();
-      }
-
+    
+    if( new Date() < expireDate ){
+      const ms = expireDate.getTime() - new Date().getTime();
+      console.log('ms: ', ms);
+      userCtx.loginAuto(token, userId);
+      userCtx.logoutAuto(ms);
+    }else{
+      userCtx.logout();
     }
-  }
+  }, []);
 
-  render(){
-    return (
-      <div>
-        <Toolbar toggleSidebar={this.toggleSidebar} />
-        <SideBar toggleSidebar={this.toggleSidebar} isOpen={this.state.showSidebar} toggleSidebar={this.toggleSidebar} />
-        <main className={css.Content}>
-          {/* <div><b>userId</b>: {this.props.userId}</div> */}
-            { this.props.userId ? (
-              <Switch>
+  return (
+    <div>
+      <Toolbar toggleSidebar={toggleSidebar} />
+      <SideBar toggleSidebar={toggleSidebar} isOpen={showSidebar} toggleSidebar={toggleSidebar} />
+      <main className={css.Content}>
+        <BurgerStore>
+        <Suspense fallback={<div>Loading ...</div>}>
+          { userCtx.state.userId ? (
+            <Switch>
                 <Route path="/logout" component={Logout} />
-                <Route path="/orders" component={OrderPage} />
+                <Route path="/orders" >
+                  <OrdersStore>
+                      <OrderPage />
+                  </OrdersStore>
+                </Route>
                 <Route path="/shipping" component={ShippingPage} />
                 <Route path="/" component={BurgerPage} />
-              </Switch>
-            ) : (
-              <Switch>
-                <Route path="/signup" component={SignupPage} />
-                <Route path="/login" component={LoginPage} />
-                <Redirect to='/login' />
-              </Switch>
-            ) }
-        </main>
-      </div>
-    );
-  }
+            </Switch>
+          ) : (
+            <Switch>
+              <Route path="/signup" component={SignupPage} />
+              <Route path="/login" component={LoginPage} />
+              <Redirect to='/login' />
+            </Switch>
+          ) }
+        </Suspense>
+        </BurgerStore>
+      </main>
+    </div>
+  );
 }
 
-const mapStateToProps = state => {
-  return {
-    userId: state.signupReducer.userId
-  }
-}
-
-const mapDispatchToProps = dispatch => {
-  return {
-    autoLogin: (email, password) => dispatch(actions.loginSuccess(email, password)),
-    logoutAuto: ms => dispatch(actions.logoutAuto(ms)),
-    logout: () => dispatch(actions.logout())
-  }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(App);
+export default App;

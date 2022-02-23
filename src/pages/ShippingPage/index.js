@@ -1,46 +1,37 @@
-import React from "react";
+import React, {useContext} from "react";
 import { Route } from "react-router-dom";
-import {connect} from "react-redux"
 
 import Burger from "../../components/Burger"; 
 import DeliveryData from "../../components/DeliveryData";
 import Button from "../../components/General/Button";
 import css from "./style.module.css";
+import BurgerContext from "../../context/BurgerContext";
 
-class ShippingPage extends React.Component{
+const ShippingPage = props => {
 
-    componentWillMount(){
+    const burgerContext = useContext(BurgerContext);
+
+    const cancelOrder = () => {
+        props.history.replace("/");
     }
 
-    cancelOrder = () => {
-        this.props.history.replace("/");
+    const showDeliveryForm = () => {
+        props.history.push("/shipping/delivery");
     }
 
-    showDeliveryForm = () => {
-        this.props.history.push("/shipping/delivery");
-    }
+    return (
+        <div className={css.ShippingPage}>
+            <p><b>ORDER INFORMATION</b></p>
+            <p>Price: <b>{burgerContext.burger.totalPrice}$</b></p>
+            <Burger />
+            <Button clicked={cancelOrder} type="Danger" text="CANCEL ORDER" />
+            <Button clicked={showDeliveryForm} type="Success" text="DELIVERY INFORMATION" />
 
-    render(){
-        return (
-            <div className={css.ShippingPage}>
-                <p><b>ORDER INFORMATION</b></p>
-                <p>Price: <b>{this.props.price}$</b></p>
-                <Burger />
-                <Button clicked={this.cancelOrder} type="Danger" text="CANCEL ORDER" />
-                <Button clicked={this.showDeliveryForm} type="Success" text="DELIVERY INFORMATION" />
-
-                <Route path="/shipping/delivery">
-                    <DeliveryData />
-                </Route>
-            </div>
-        );
-    }
+            <Route path="/shipping/delivery">
+                <DeliveryData />
+            </Route>
+        </div>
+    );
 }
 
-const mapStateToProps = state =>{
-    return {
-        price: state.burgerReducer.totalPrice
-    }
-}
-
-export default connect(mapStateToProps)(ShippingPage);
+export default ShippingPage;
