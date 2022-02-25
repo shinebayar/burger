@@ -13,11 +13,11 @@ export const OrdersStore = props => {
 
     const [state, setState] = useState(initialState);
 
-    const loadOrders = () => {
+    const loadOrders = (token, userId) => {
         // to show spinner
         setState({ ...state, loading: true });
 
-        axios.get('/orders.json')
+        axios.get(`orders.json?&auth=${token}&orderBy="userId"&equalTo="${userId}"`)
             .then( res => {
                 const receivedOrders = Object.entries(res.data).reverse();
                 setState({ ...state, orders: receivedOrders });

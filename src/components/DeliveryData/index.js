@@ -6,11 +6,12 @@ import Button from "../General/Button";
 import css from "./style.module.css";
 import Spinner from "../General/Spinner";
 import BurgerContext from "../../context/BurgerContext";
+import UserContext from "../../context/UserContext";
 
 const DeliveryData = props => {
 
     const burgerCtx = useContext(BurgerContext);
-    // console.log('Burger Context: ', burgerCtx);
+    const userCtx = useContext(UserContext);
 
     const history = useHistory();
 
@@ -59,11 +60,13 @@ const DeliveryData = props => {
                 cheese: burgerCtx.burger.ingredients.cheese
             },
             totalPrice: burgerCtx.burger.totalPrice,
-            userId: "props.userId"
+            userId: userCtx.state.userId
         }
 
-        burgerCtx.saveBurger(newOrder);
+        burgerCtx.saveBurger(userCtx.state.token, newOrder);
     }
+
+    console.log('in Delivery ');
 
     return (
         <div className={css.DeliveryData}>
@@ -87,6 +90,8 @@ const DeliveryData = props => {
                 </div>
             )
             }
+            <Button text="toggle" type="Success" clicked={burgerCtx.toggle} />
+
             
         </div>
     );

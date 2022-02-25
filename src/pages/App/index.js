@@ -20,7 +20,6 @@ const OrderPage = React.lazy( () => import('../OrderPage') );
 const App = props => {
 
   const userCtx = useContext(UserContext);
-  console.log('userCtx: ', userCtx);
 
   const [showSidebar, setShowSidebar] = useState(false);
 
@@ -31,15 +30,14 @@ const App = props => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userId = localStorage.getItem('userId');
-    const expireDate = localStorage.getItem('expireDate');
+    const refreshToken = localStorage.getItem('refreshToken');
+    const expireDate = new Date(localStorage.getItem('expireDate'));
     
-    if( new Date() < expireDate ){
-      const ms = expireDate.getTime() - new Date().getTime();
-      console.log('ms: ', ms);
-      userCtx.loginAuto(token, userId);
-      userCtx.logoutAuto(ms);
+    if( expireDate > new Date() ){
+      userCtx.loginUserSuccess(token, userId, expireDate, refreshToken);
+      userCtx.autoRefreshToken(expireDate.getTime() - new Date().getTime());
     }else{
-      userCtx.logout();
+      userCtx.autoRefreshToken(3600 * 1000);
     }
   }, []);
 

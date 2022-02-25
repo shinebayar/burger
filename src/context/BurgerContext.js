@@ -54,11 +54,11 @@ export const BurgerStore = props => {
         });
     }
 
-    const saveBurger = newOrder => {
+    const saveBurger = (token, newOrder) => {
         // to show spinner
         setBurger( {...burger, saving: true} );
 
-        axios.post('/orders.json', newOrder)
+        axios.post(`orders.json?auth=${token}`, newOrder)
             .then( res =>  setBurger({ ...burger, saving: false, finished: true, error: null }) )
             .catch(err =>  {
                 console.log('err.message', err.message);
@@ -71,13 +71,18 @@ export const BurgerStore = props => {
         setBurger(initialState);
     }
 
+    const toggle = () => {
+        setBurger({...burger, saving: !burger.saving});
+    }
+
     return (
         <BurgerContext.Provider value={{ 
             burger, 
             addIngredient, 
             removeIngredient, 
             saveBurger, 
-            clearBurger
+            clearBurger,
+            toggle
         }}> {props.children} </BurgerContext.Provider>
     );
 
